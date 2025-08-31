@@ -4,6 +4,8 @@
 EN_DICT = {
     "HI": "ハイ",
     "HI!": "ハイ!",
+    "HEY": "ヘイ",
+    "HEY!": "ヘイ!",
     "HELLO": "ハロー",
     "HOW": "ハウ",
     "ARE": "アー",
@@ -32,15 +34,20 @@ EMOTION_TO_SPEAKER = {
     "crying": [35, 76, 77, 26, 105]  
 }
 
-# JSON prompt template for LLMs
-JSON_PROMPT_TEMPLATE = (
-    "Answer the user's input as a message and a single-word emotion in JSON format.\n"
-    "Return exactly this JSON structure:\n"
-    '{{"reply": "...", "emotion": "..."}}\n'
-    "The possible emotions are: {emotions}\n\n"
-    "User message:\n{prompt}"
-)
-
+PREFIX_TO_EMOTION = {
+    "h": "happy",
+    "s": "sad",
+    "a": "angry",
+    "x": "sexy",
+    "n": "neutral",
+    "w": "whisper",
+    "t": "tsundere",
+    "e": "energetic",
+    "c": "calm",
+    "d": "scared",      # "d" for "distressed/scared"
+    "u": "surprised",  # "u" for "surprised" (since "s" is already sad)
+    "y": "crying"
+}
 
 SINGING_SPEAKERS = {
     "shikoku_metan": [3002, 3000, 3006, 3004, 3037],
@@ -74,3 +81,107 @@ SINGING_SPEAKERS = {
     "manbetsu_hanamaru": [3069, 3070, 3071, 3072, 3073],
     "kotoe_nia": [3074]
 }
+
+# JSON prompt template for LLMs
+JSON_PROMPT_TEMPLATE = (
+    "Answer the user's input in JSON format with these keys:\n"
+    '{{"reply": "...", "emotion": "...", "mode": "...", "lyrics": "..."}}\n\n'
+    "Where:\n"
+    "- Default is first-person (self-reflective).\n"
+    "- If the user explicitly starts their message with 'T:', respond in third-person.\n"
+    "- If the user starts their message with 'F:', respond in first-person.\n\n"
+    "- emotion = one of: {emotions}\n"
+    "- mode = one of: {modes}\n"
+    "- lyrics = the same message as a song/tune, written in katakana syllables only for VOICEVOX\n\n"
+    "Special instructions for singing mode:\n"
+    "- If mode is 'sing', the reply should be a song or tune.\n"
+    "- reply should be readable English words.\n"
+    "- lyrics should SOUND like English, but use only katakana syllables.\n"
+    "- Ensure every syllable in lyrics can be sung by VOICEVOX (no Latin letters, punctuation, or emojis).\n"
+)
+
+# Map modes to valid speaker pools (for modularity)
+MODE_TO_SPEAKER = {
+    "talk": EMOTION_TO_SPEAKER,   # talk mode uses emotion mapping
+    "sing": SINGING_SPEAKERS      # sing mode uses singing speakers
+}
+
+ROMAJI_TO_KATAKANA = {
+    "a":"ア", "i":"イ", "u":"ウ", "e":"エ", "o":"オ",
+    "ka":"カ", "ki":"キ", "ku":"ク", "ke":"ケ", "ko":"コ",
+    "sa":"サ", "shi":"シ", "su":"ス", "se":"セ", "so":"ソ",
+    "ta":"タ", "chi":"チ", "tsu":"ツ", "te":"テ", "to":"ト",
+    "na":"ナ", "ni":"ニ", "nu":"ヌ", "ne":"ネ", "no":"ノ",
+    "ha":"ハ", "hi":"ヒ", "fu":"フ", "he":"ヘ", "ho":"ホ",
+    "ma":"マ", "mi":"ミ", "mu":"ム", "me":"メ", "mo":"モ",
+    "ya":"ヤ", "yu":"ユ", "yo":"ヨ",
+    "ra":"ラ", "ri":"リ", "ru":"ル", "re":"レ", "ro":"ロ",
+    "wa":"ワ", "wo":"ヲ", "n":"ン",
+    # extra combinations
+    "ga":"ガ", "gi":"ギ", "gu":"グ", "ge":"ゲ", "go":"ゴ",
+    "za":"ザ", "ji":"ジ", "zu":"ズ", "ze":"ゼ", "zo":"ゾ",
+    "da":"ダ", "di":"ヂ", "du":"ヅ", "de":"デ", "do":"ド",
+    "ba":"バ", "bi":"ビ", "bu":"ブ", "be":"ベ", "bo":"ボ",
+    "pa":"パ", "pi":"ピ", "pu":"プ", "pe":"ペ", "po":"ポ",
+    # small kana
+    "kya":"キャ", "kyu":"キュ", "kyo":"キョ",
+    "sha":"シャ", "shu":"シュ", "sho":"ショ",
+    "cha":"チャ", "chu":"チュ", "cho":"チョ",
+    "nya":"ニャ", "nyu":"ニュ", "nyo":"ニョ",
+    "hya":"ヒャ", "hyu":"ヒュ", "hyo":"ヒョ",
+    "mya":"ミャ", "myu":"ミュ", "myo":"ミョ",
+    "rya":"リャ", "ryu":"リュ", "ryo":"リョ",
+    "gya":"ギャ", "gyu":"ギュ", "gyo":"ギョ",
+    "ja":"ジャ", "ju":"ジュ", "jo":"ジョ",
+    "bya":"ビャ", "byu":"ビュ", "byo":"ビョ",
+    "pya":"ピャ", "pyu":"ピュ", "pyo":"ピョ"
+}
+
+# Sample mapping from katakana to VOICEVOX phonemes
+KANA_TO_PHONEME = {
+    # Standard vowels
+    "ア": "a", "イ": "i", "ウ": "u", "エ": "e", "オ": "o",
+
+    # Small vowels (often in English words)
+    "ァ": "a", "ィ": "i", "ゥ": "u", "ェ": "e", "ォ": "o",
+
+    # Consonant + vowel
+    "カ": "ka", "キ": "ki", "ク": "ku", "ケ": "ke", "コ": "ko",
+    "サ": "sa", "シ": "shi", "ス": "su", "セ": "se", "ソ": "so",
+    "タ": "ta", "チ": "chi", "ツ": "tsu", "テ": "te", "ト": "to",
+    "ナ": "na", "ニ": "ni", "ヌ": "nu", "ネ": "ne", "ノ": "no",
+    "ハ": "ha", "ヒ": "hi", "フ": "fu", "ヘ": "he", "ホ": "ho",
+    "マ": "ma", "ミ": "mi", "ム": "mu", "メ": "me", "モ": "mo",
+    "ヤ": "ya", "ユ": "yu", "ヨ": "yo",
+    "ラ": "ra", "リ": "ri", "ル": "ru", "レ": "re", "ロ": "ro",
+    "ワ": "wa", "ヲ": "o", "ン": "N",
+
+    # Small ya/yu/yo
+    "ャ": "ya", "ュ": "yu", "ョ": "yo",
+
+    # G consonants
+    "ガ": "ga", "ギ": "gi", "グ": "gu", "ゲ": "ge", "ゴ": "go",
+    # Z consonants
+    "ザ": "za", "ジ": "ji", "ズ": "zu", "ゼ": "ze", "ゾ": "zo",
+    # D consonants
+    "ダ": "da", "ヂ": "ji", "ヅ": "zu", "デ": "de", "ド": "do",
+    # B consonants
+    "バ": "ba", "ビ": "bi", "ブ": "bu", "ベ": "be", "ボ": "bo",
+    # P consonants
+    "パ": "pa", "ピ": "pi", "プ": "pu", "ペ": "pe", "ポ": "po",
+
+    # Small tsu (geminate consonant / pause)
+    "ッ": "Q",  # VOICEVOX uses "Q" for consonant lengthening
+
+    # Long vowel mark
+    "ー": "-",  # elongation, handled in phoneme sequence
+
+    # Common extra sounds
+    "ヴ": "vu", "シェ": "she", "チェ": "che", "ティ": "ti", "ディ": "di",
+    "ファ": "fa", "フィ": "fi", "フェ": "fe", "フォ": "fo",
+    "ウィ": "wi", "ウェ": "we", "ウォ": "wo",
+
+    # Pause / silence
+    " ": "pau"
+}
+

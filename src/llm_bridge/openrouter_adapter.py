@@ -1,5 +1,5 @@
 import os
-from openai import OpenAI
+from openai import OpenAI, OpenAIError
 from .base import LLMClient
 from .utils import complete_with_client
 
@@ -12,4 +12,8 @@ class OpenRouterClient(LLMClient):
         self.client = OpenAI(api_key=self.api_key, base_url="https://openrouter.ai/api/v1")
 
     def complete(self, prompt: str, history=None) -> dict:
-        return complete_with_client(self.client, self.model, prompt)
+        try:
+            return complete_with_client(self.client, self.model, prompt)
+        except OpenAIError as e:
+            print(f"Using user input as fallback.")
+            return {"reply": prompt, "emotion": "neutral", "mode": "talk"}

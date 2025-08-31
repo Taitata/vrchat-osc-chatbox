@@ -1,7 +1,9 @@
 import os
 from huggingface_hub import InferenceClient
+from huggingface_hub.utils import HfHubHTTPError
 from .base import LLMClient
 from .utils import complete_with_client
+import requests
 
 class HuggingFaceClient(LLMClient):
     def __init__(self, api_key=None, model=None):
@@ -12,4 +14,8 @@ class HuggingFaceClient(LLMClient):
         self.client = InferenceClient(token=self.api_key)
 
     def complete(self, prompt: str, history=None) -> dict:
-        return complete_with_client(self.client, self.model, prompt)
+        try:
+            return complete_with_client(self.client, self.model, prompt)
+        except (HfHubHTTPError, requests.HTTPError) as e:
+            print(f"Using user input as fallback.")
+            return {"reply": prompt, "emotion": "neutral", "mode": "talk"}

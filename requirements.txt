@@ -9,3 +9,4 @@ requests>=2.31.0
 pykakasi>=2.3.0
 python-romkan-ng>=0.3.0
 huggingface-hub>=0.15.1
+music21>=6.1.0
