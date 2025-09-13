@@ -2,16 +2,65 @@
 
 # Small dictionary for common English words for TTS preprocessing
 EN_DICT = {
-    "HI": "ハイ",
-    "HI!": "ハイ!",
-    "HEY": "ヘイ",
-    "HEY!": "ヘイ!",
     "HELLO": "ハロー",
+    "HI": "ハイ",
+    "HEY": "ヘイ",
+    "THANKS": "サンキュー",
+    "THANK YOU": "サンキュー",
+    "SORRY": "ソーリー",
+    "PLEASE": "プリーズ",
+    "GOOD": "グッド",
+    "BAD": "バッド",
+    "YES": "イエス",
+    "NO": "ノー",
+    "OK": "オーケー",
+    "BYE": "バイ",
+    "SEE YOU": "シーユー",
+    "GOODBYE": "グッバイ",
+
+    # Everyday Nouns
+    "HOTEL": "ホテル",
+    "RESTAURANT": "レストラン",
+    "SUPERMARKET": "スーパー",
+    "CONVENIENCE STORE": "コンビニ",
+    "COFFEE": "コーヒー",
+    "TEA": "ティー",
+    "MILK": "ミルク",
+    "BREAD": "パン",
+    "ICE CREAM": "アイスクリーム",
+    "CHOCOLATE": "チョコレート",
+    "CAR": "カー",
+    "BUS": "バス",
+    "TRAIN": "トレイン",
+    "PHONE": "フォン",
+    "TV": "テレビ",
+    "INTERNET": "インターネット",
+    "GAME": "ゲーム",
+    "MUSIC": "ミュージック",
+
+    # Verbs
+    "START": "スタート",
+    "STOP": "ストップ",
+    "CLICK": "クリック",
+    "COPY": "コピー",
+    "DELETE": "デリート",
+    "CHAT": "チャット",
+    "EMAIL": "メール",
     "HOW": "ハウ",
     "ARE": "アー",
     "YOU": "ユー",
     "CPU": "シーピーユー",
     "AI": "エーアイ",
+    "HUSH": "ハッシュ",
+    "STARLIGHT": "スターライト",
+    "DRIFT": "ドリフト",
+    "INTO": "イントゥ",       # or インツ, depending on taste
+    "DREAMS": "ドリームズ",
+    "FLOAT": "フロート",
+    "AWAY": "アウェイ",
+    "SILVER": "シルバー",
+    "STREAMS": "ストリームズ"
+
 }
 
 # Map emotions to speaker numbers (for TTS) and style hints
@@ -44,8 +93,8 @@ PREFIX_TO_EMOTION = {
     "t": "tsundere",
     "e": "energetic",
     "c": "calm",
-    "d": "scared",      # "d" for "distressed/scared"
-    "u": "surprised",  # "u" for "surprised" (since "s" is already sad)
+    "d": "scared",
+    "u": "surprised",
     "y": "crying"
 }
 

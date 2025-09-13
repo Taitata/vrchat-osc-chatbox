@@ -2,10 +2,10 @@ import os, re, time, random
 import json
 import romkan
 from music21 import stream, note, meter, converter
-from llm_bridge.state import ChatState
-from constants import JSON_PROMPT_TEMPLATE, EMOTION_TO_SPEAKER, MODE_TO_SPEAKER, ROMAJI_TO_KATAKANA, KANA_TO_PHONEME
+from llm_bridge.state import chat_state
+from constants import JSON_PROMPT_TEMPLATE, EMOTION_TO_SPEAKER, MODE_TO_SPEAKER, ROMAJI_TO_KATAKANA, KANA_TO_PHONEME, PREFIX_TO_EMOTION
 
-PREFIX_TO_EMOTION = {k[0].lower(): k for k in EMOTION_TO_SPEAKER.keys()}
+
 
 def retry_with_backoff(func):
     retries=int(os.getenv('MAX_RETRIES','3')); base=int(os.getenv('BACKOFF_BASE_SEC','2'))
@@ -22,23 +22,56 @@ def safety_filter(text, max_len=2048):
         if re.search(w,t,re.I): return '[Filtered: unsafe]'
     return t[:max_len]
 
+import re
+
 def parse_input(user_input: str) -> None:
     """
-    Update chat_state with emotion + call_llm flag.
+    Parse user input for LLM and emotion markers.
+    Supported:
+      - "t:" (LLM only)
+      - "t:<letter>" or "<letter>t:" (LLM + emotion)
+      - "<letter>" at start or end (emotion only)
     """
-    # LLM mode
-    if user_input.lower().startswith("t:"):
-        rest = user_input[2:].strip()
-        if rest and rest[0].lower() in PREFIX_TO_EMOTION:
-            ChatState.emotion = PREFIX_TO_EMOTION[rest[0].lower()]
-        ChatState.call_llm = True
-        return
+    text = user_input.strip()
+    chat_state.emotion = "neutral"
+    chat_state.call_llm = False
+    cleaned = text
 
-    # TTS mode
-    if user_input and user_input[0].lower() in PREFIX_TO_EMOTION:
-        ChatState.emotion = PREFIX_TO_EMOTION[user_input[0].lower()]
-    ChatState.call_llm = False
-    
+    # --- Step 1: Look for LLM markers ---
+    llm_match = re.search(r'(^| )([a-zA-Z]?t:|t:[a-zA-Z]?)( |$)', text, re.IGNORECASE)
+    if llm_match:
+        token = llm_match.group(2)
+        chat_state.call_llm = True
+        # Case: "t:<letter>"
+        if token.lower().startswith("t:") and len(token) > 2:
+            letter = token[2].lower()
+            if letter in PREFIX_TO_EMOTION:
+                chat_state.emotion = PREFIX_TO_EMOTION[letter]
+        # Case: "<letter>t:"
+        elif token.lower().endswith("t:") and len(token) > 2:
+            letter = token[0].lower()
+            if letter in PREFIX_TO_EMOTION:
+                chat_state.emotion = PREFIX_TO_EMOTION[letter]
+        cleaned = text.replace(token, "").strip()
+
+    # --- Step 2: If no LLM, check for single-letter emotion token ---
+    if not chat_state.call_llm:
+        tokens = cleaned.split()
+        if tokens:
+            # Check first token
+            if len(tokens[0]) == 1 and tokens[0].lower() in PREFIX_TO_EMOTION:
+                chat_state.emotion = PREFIX_TO_EMOTION[tokens[0].lower()]
+                tokens = tokens[1:]
+            # Check last token
+            elif len(tokens[-1]) == 1 and tokens[-1].lower() in PREFIX_TO_EMOTION:
+                chat_state.emotion = PREFIX_TO_EMOTION[tokens[-1].lower()]
+                tokens = tokens[:-1]
+            cleaned = " ".join(tokens)
+
+
+
+    chat_state.cleaned_input = cleaned
+
 def prepare_system_prompt() -> str:
     return JSON_PROMPT_TEMPLATE.format(
         emotions=", ".join(EMOTION_TO_SPEAKER.keys()),

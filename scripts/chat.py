@@ -8,7 +8,7 @@ from pathlib import Path
 root = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(root / 'src'))
 
-from llm_bridge.state import ChatState
+from llm_bridge.state import chat_state
 from osc_chatbox.config import SETTINGS
 from osc_chatbox.osc_io import ChatboxClient
 from llm_bridge.openrouter_adapter import OpenRouterClient
@@ -56,7 +56,8 @@ def main():
                continue
             
             parse_input(user_input)
-            if ChatState.call_llm:
+
+            if chat_state.call_llm:
                 def call():
                     cleaned_input = re.sub(r'^(t:|[{}])'.format("".join(PREFIX_TO_EMOTION.keys())), "", user_input.strip(), flags=re.IGNORECASE).strip()
                     return llm.complete(cleaned_input, history=history)
@@ -85,7 +86,7 @@ def main():
                     response_data["reply"] = str(raw_response)
             
             else:
-                response_data = {"reply": user_input, "emotion": "neutral", "mode": "talk"}
+                    response_data = {"reply": chat_state.cleaned_input,"emotion": chat_state.emotion,"mode": "talk"}
 
             # Extract message and emotion, map to TTS speaker number
             message = response_data.get("reply", "").strip() or user_input
